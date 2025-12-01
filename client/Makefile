@@ -1,38 +1,31 @@
+# Makefile для сборки клиента
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall -Wextra -pedantic
+CXXFLAGS = -std=c++11 -Wall -Wextra -I.
 LDFLAGS = -lssl -lcrypto
 
-SOURCES = main.cpp client.cpp client_auth.cpp client_network.cpp
-OBJECTS = $(SOURCES:.cpp=.o)
-TARGET = client
+SRCS = main.cpp \
+       Client.cpp \
+       ErrorHandler.cpp \
+       Authenticator.cpp \
+       DataProcessor.cpp \
+       ServerConnection.cpp
 
-TEST_SOURCES = simple_test.cpp
-TEST_OBJECTS = $(TEST_SOURCES:.cpp=.o) $(filter-out main.o, $(OBJECTS))
-TEST_TARGET = client_test
+OBJS = $(SRCS:.cpp=.o)
+TARGET = client
 
 all: $(TARGET)
 
-$(TARGET): $(OBJECTS)
-	$(CXX) $(OBJECTS) -o $(TARGET) $(LDFLAGS)
+$(TARGET): $(OBJS)
+	$(CXX) $(OBJS) -o $(TARGET) $(LDFLAGS)
 
-$(TEST_TARGET): $(TEST_OBJECTS)
-	$(CXX) $(TEST_OBJECTS) -o $(TEST_TARGET) $(LDFLAGS)
-
-%.o: %.cpp client.h
+%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-test: $(TEST_TARGET)
-
 clean:
-	rm -f $(OBJECTS) $(TARGET) $(TEST_OBJECTS) $(TEST_TARGET) test_*.txt test_*.conf
+	rm -f $(OBJS) $(TARGET)
 
-help:
-	@echo "Доступные команды:"
-	@echo "  make all        - собрать основную программу"
-	@echo "  make            - то же, что make all"
-	@echo "  make test       - собрать и запустить тесты"
-	@echo "  make test-build - только собрать тесты"
-	@echo "  make clean      - очистить все сгенерированные файлы"
-	@echo "  make help       - показать эту справку"
+install:
+	cp $(TARGET) /usr/local/bin/
 
-.PHONY: all clean test test-build help
+uninstall:
+	rm -f /usr/local/bin/$(TARGET)
