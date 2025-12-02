@@ -13,7 +13,7 @@
 
 // Вспомогательные функции для преобразования порядка байтов для 64-битных значений
 #if __BYTE_ORDER == __LITTLE_ENDIAN
-// Для little-endian систем
+
 uint64_t htonll(uint64_t value) {
     return ((uint64_t)htonl(value & 0xFFFFFFFF) << 32) | htonl(value >> 32);
 }
@@ -22,7 +22,6 @@ uint64_t ntohll(uint64_t value) {
     return ((uint64_t)ntohl(value & 0xFFFFFFFF) << 32) | ntohl(value >> 32);
 }
 #else
-// Для big-endian систем
 uint64_t htonll(uint64_t value) { return value; }
 uint64_t ntohll(uint64_t value) { return value; }
 #endif
@@ -179,11 +178,6 @@ bool ServerConnection::receiveBinaryData(void* data, size_t size) {
 bool ServerConnection::sendVectors(const std::vector<std::vector<double>>& vectors, std::vector<double>& results) {
     results.clear();
     results.reserve(vectors.size());
-    
-    // ВАЖНО: Из лога видно, что сервер ожидает LITTLE-ENDIAN формат
-    // 67108864 = 0x04000000 в little-endian это 0x00000004 = 4
-    
-    // 1. Отправляем количество векторов в LITTLE-ENDIAN формате
     uint32_t numVectors = static_cast<uint32_t>(vectors.size());
     
     // Отладка: показываем что отправляем
@@ -203,8 +197,6 @@ bool ServerConnection::sendVectors(const std::vector<std::vector<double>>& vecto
     // 2. Для каждого вектора
     for (size_t i = 0; i < vectors.size(); ++i) {
         const auto& vec = vectors[i];
-        
-        // Отправляем размер вектора в LITTLE-ENDIAN формате
         uint32_t vecSize = static_cast<uint32_t>(vec.size());
         
         std::cout << "Отладка: Размер вектора " << i << ": " << vecSize << std::endl;
@@ -220,7 +212,6 @@ bool ServerConnection::sendVectors(const std::vector<std::vector<double>>& vecto
             return false;
         }
         
-        // Отправляем значения вектора в LITTLE-ENDIAN формате
         if (vecSize > 0) {
             // Выводим первые значения для отладки
             if (i == 0 && vecSize > 0) {
@@ -240,7 +231,7 @@ bool ServerConnection::sendVectors(const std::vector<std::vector<double>>& vecto
         
         // 3. Получаем результат для этого вектора
         // Ждем некоторое время, чтобы сервер успел обработать
-        usleep(1000); // 1ms задержка
+        usleep(1000);
         
         double result;
         ssize_t bytesReceived = recv(socketFD, &result, sizeof(result), MSG_DONTWAIT);

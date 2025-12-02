@@ -25,4 +25,4 @@ public:
     void closeConnection();
 };
 
-#endif // SERVERCONNECTION_H
+#endif 
