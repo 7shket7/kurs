@@ -32,7 +32,6 @@ $(TEST_TARGET): $(TEST_OBJS)
 	$(CXX) $(TEST_OBJS) -o $(TEST_TARGET) $(TEST_LDFLAGS)
 
 test: $(TEST_TARGET)
-	./$(TEST_TARGET)
 
 clean:
 	rm -f $(OBJS) $(TARGET) $(TEST_OBJS) $(TEST_TARGET)

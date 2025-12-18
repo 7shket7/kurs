@@ -11,27 +11,63 @@
 #include <cstdint>
 #include <errno.h>
 
-// Вспомогательные функции для преобразования порядка байтов для 64-битных значений
+/**
+ * @brief Вспомогательные функции для преобразования порядка байтов для 64-битных значений
+ * @details Функции обеспечивают корректное преобразование между сетевым порядком байтов
+ * и порядком байтов хоста для 64-битных значений на little-endian архитектурах.
+ */
+
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 
+/**
+ * @brief Преобразует 64-битное значение из порядка байтов хоста в сетевой порядок
+ * @param value Значение для преобразования
+ * @return Значение в сетевом порядке байтов
+ */
 uint64_t htonll(uint64_t value) {
     return ((uint64_t)htonl(value & 0xFFFFFFFF) << 32) | htonl(value >> 32);
 }
 
+/**
+ * @brief Преобразует 64-битное значение из сетевого порядка байтов в порядок байтов хоста
+ * @param value Значение для преобразования
+ * @return Значение в порядке байтов хоста
+ */
 uint64_t ntohll(uint64_t value) {
     return ((uint64_t)ntohl(value & 0xFFFFFFFF) << 32) | ntohl(value >> 32);
 }
 #else
+/**
+ * @brief Преобразование не требуется на big-endian архитектурах
+ */
 uint64_t htonll(uint64_t value) { return value; }
+
+/**
+ * @brief Преобразование не требуется на big-endian архитектурах
+ */
 uint64_t ntohll(uint64_t value) { return value; }
 #endif
 
+/**
+ * @brief Конструктор класса ServerConnection
+ * @details Инициализирует дескриптор сокета значением -1
+ */
 ServerConnection::ServerConnection() : socketFD(-1) {}
 
+/**
+ * @brief Деструктор класса ServerConnection
+ * @details Автоматически закрывает соединение при уничтожении объекта
+ */
 ServerConnection::~ServerConnection() {
     closeConnection();
 }
 
+/**
+ * @brief Устанавливает соединение с сервером
+ * @param [in] address Адрес сервера (IP или доменное имя)
+ * @param [in] port Порт сервера
+ * @return true если соединение установлено, false в случае ошибки
+ */
 bool ServerConnection::establishConnection(const std::string& address, int port) {
     socketFD = socket(AF_INET, SOCK_STREAM, 0);
     if (socketFD < 0) {
@@ -58,6 +94,11 @@ bool ServerConnection::establishConnection(const std::string& address, int port)
     return true;
 }
 
+/**
+ * @brief Отправляет текстовые данные через сокет
+ * @param [in] text Текст для отправки
+ * @return true если отправка успешна, false в случае ошибки
+ */
 bool ServerConnection::sendText(const std::string& text) {
     std::string message = text + "\n";
     ssize_t bytesSent = send(socketFD, message.c_str(), message.length(), 0);
@@ -70,6 +111,11 @@ bool ServerConnection::sendText(const std::string& text) {
     return true;
 }
 
+/**
+ * @brief Принимает текстовые данные через сокет
+ * @param [out] text Буфер для принятого текста
+ * @return true если прием успешен, false в случае ошибки
+ */
 bool ServerConnection::receiveText(std::string& text) {
     char buffer[1024];
     ssize_t bytesReceived = recv(socketFD, buffer, sizeof(buffer) - 1, 0);
@@ -90,6 +136,18 @@ bool ServerConnection::receiveText(std::string& text) {
     return true;
 }
 
+/**
+ * @brief Выполняет аутентификацию на сервере
+ * @param [in] userLogin Логин пользователя
+ * @param [in] userPassword Пароль пользователя
+ * @return true если аутентификация успешна, false в случае ошибки
+ * @details Процесс аутентификации:
+ * 1. Отправка LOGIN на сервер
+ * 2. Получение SALT16 от сервера
+ * 3. Вычисление HASH с использованием соли и пароля
+ * 4. Отправка HASH на сервер
+ * 5. Получение подтверждения аутентификации
+ */
 bool ServerConnection::authenticate(const std::string& userLogin, const std::string& userPassword) {
     login = userLogin;
     password = userPassword;
@@ -143,6 +201,12 @@ bool ServerConnection::authenticate(const std::string& userLogin, const std::str
     return true;
 }
 
+/**
+ * @brief Отправляет бинарные данные через сокет
+ * @param [in] data Указатель на данные
+ * @param [in] size Размер данных в байтах
+ * @return true если отправка успешна, false в случае ошибки
+ */
 bool ServerConnection::sendBinaryData(const void* data, size_t size) {
     ssize_t totalSent = 0;
     const char* dataPtr = static_cast<const char*>(data);
@@ -159,6 +223,12 @@ bool ServerConnection::sendBinaryData(const void* data, size_t size) {
     return true;
 }
 
+/**
+ * @brief Принимает бинарные данные через сокет
+ * @param [out] data Буфер для принятых данных
+ * @param [in] size Ожидаемый размер данных в байтах
+ * @return true если прием успешен, false в случае ошибки
+ */
 bool ServerConnection::receiveBinaryData(void* data, size_t size) {
     ssize_t totalReceived = 0;
     char* dataPtr = static_cast<char*>(data);
@@ -175,6 +245,18 @@ bool ServerConnection::receiveBinaryData(void* data, size_t size) {
     return true;
 }
 
+/**
+ * @brief Отправляет векторы на сервер для обработки и получает результаты
+ * @param [in] vectors Векторы для обработки
+ * @param [out] results Результаты обработки от сервера
+ * @return true если операция успешна, false в случае ошибки
+ * @details Процесс отправки:
+ * 1. Отправка количества векторов (uint32_t)
+ * 2. Для каждого вектора:
+ *    a. Отправка размера вектора (uint32_t)
+ *    b. Отправка данных вектора (double[])
+ *    c. Получение результата обработки (double)
+ */
 bool ServerConnection::sendVectors(const std::vector<std::vector<double>>& vectors, std::vector<double>& results) {
     results.clear();
     results.reserve(vectors.size());
@@ -264,6 +346,9 @@ bool ServerConnection::sendVectors(const std::vector<std::vector<double>>& vecto
     return true;
 }
 
+/**
+ * @brief Закрывает соединение с сервером
+ */
 void ServerConnection::closeConnection() {
     if (socketFD >= 0) {
         std::cout << "Лог: Закрытие соединения" << std::endl;

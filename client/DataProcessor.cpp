@@ -1,3 +1,13 @@
+/**
+ * @file DataProcessor.cpp
+ * @brief Реализация класса DataProcessor
+ * @details Содержит реализацию методов для работы с данными векторов:
+ * чтение из файла, валидация, преобразование в бинарный формат и сохранение результатов.
+ * @author Ежов Егор Александрович
+ * @date 01.12.2025
+ * @version 1.0
+ */
+
 #include "DataProcessor.h"
 #include "ErrorHandler.h"
 #include <fstream>
@@ -6,6 +16,17 @@
 #include <cstring>
 #include <cstdint>
 
+/**
+ * @brief Читает векторы из файла
+ * @param [in] filename Имя файла с данными
+ * @return true если чтение успешно, false в случае ошибки
+ * @details Формат файла:
+ * 1. Первое число - количество векторов (size_t)
+ * 2. Для каждого вектора:
+ *    a. Размер вектора (size_t)
+ *    b. Значения вектора (double), разделенные пробелами
+ * @warning При ошибке чтения вызывает exitWithError
+ */
 bool DataProcessor::readVectorsFromFile(const std::string& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
@@ -55,6 +76,14 @@ bool DataProcessor::readVectorsFromFile(const std::string& filename) {
     return true;
 }
 
+/**
+ * @brief Проверяет корректность загруженных данных
+ * @return true если данные корректны, false в случае ошибки
+ * @details Выполняет проверки:
+ * 1. Проверка наличия хотя бы одного вектора
+ * 2. Проверка отсутствия пустых векторов
+ * @note Не проверяет числовые значения на корректность (NaN, Inf)
+ */
 bool DataProcessor::validateData() const {
     if (vectors.empty()) {
         ErrorHandler::logError("Нет векторов для обработки");
@@ -71,6 +100,16 @@ bool DataProcessor::validateData() const {
     return true;
 }
 
+/**
+ * @brief Преобразует векторы в бинарный формат
+ * @return Бинарное представление векторов в виде вектора байтов
+ * @details Бинарный формат:
+ * 1. uint32_t - количество векторов (little-endian)
+ * 2. Для каждого вектора:
+ *    a. uint32_t - размер вектора (little-endian)
+ *    b. double[] - значения вектора (little-endian)
+ * @note Все числа сохраняются в формате little-endian
+ */
 std::vector<char> DataProcessor::convertToBinary() const {
     std::vector<char> binaryData;
     
@@ -105,6 +144,15 @@ std::vector<char> DataProcessor::convertToBinary() const {
     return binaryData;
 }
 
+/**
+ * @brief Сохраняет результаты обработки в файл
+ * @param [in] filename Имя файла для сохранения
+ * @param [in] results Результаты обработки от сервера
+ * @return true если сохранение успешно, false в случае ошибки
+ * @details Формат файла результатов:
+ * 1. Количество результатов (size_t)
+ * 2. Значения результатов (double), разделенные пробелами
+ */
 bool DataProcessor::saveResults(const std::string& filename, const std::vector<double>& results) const {
     std::ofstream file(filename);
     if (!file.is_open()) {

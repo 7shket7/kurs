@@ -11,7 +11,6 @@
 
 using namespace std;
 
-// ================ Вспомогательные функции ================
 namespace TestUtils {
     string createTempFile(const string& content) {
         char tempName[] = "/tmp/test_XXXXXX";
@@ -35,9 +34,7 @@ namespace TestUtils {
     }
 }
 
-// ================ Мок-классы для изоляции тестов ================
 
-// Мок-класс Authenticator
 class MockAuthenticator {
 public:
     static string computeHash(const string& salt, const string& password) {
@@ -72,7 +69,6 @@ public:
     }
 };
 
-// Мок-класс DataProcessor
 class MockDataProcessor {
 private:
     vector<vector<double>> vectors;
@@ -124,7 +120,6 @@ public:
     }
 };
 
-// Мок-класс ErrorHandler
 class MockErrorHandler {
 public:
     static void logError(const string& /* message */) {
@@ -140,7 +135,6 @@ public:
     }
 };
 
-// ================ Тесты для Authenticator ================
 SUITE(AuthenticatorTest)
 {
     // Тест 1: Вычисление хеша
@@ -189,7 +183,6 @@ SUITE(AuthenticatorTest)
     }
 }
 
-// ================ Фикстуры для тестов ================
 struct ValidConfigFile {
     string filename;
     
@@ -219,7 +212,6 @@ struct ValidInputDataFile {
     }
 };
 
-// ================ Тесты для DataProcessor ================
 SUITE(DataProcessorTest)
 {
     // Тест 1: Чтение валидных данных из файла
@@ -279,7 +271,6 @@ SUITE(DataProcessorTest)
     }
 }
 
-// ================ Тесты для парсинга аргументов ================
 SUITE(CommandLineArgsTest)
 {
     // Тест 1: Минимальные аргументы
@@ -326,7 +317,6 @@ SUITE(CommandLineArgsTest)
     }
 }
 
-// ================ Тесты для ErrorHandler ================
 SUITE(ErrorHandlerTest)
 {
     // Тест 1: Логирование ошибок
@@ -358,7 +348,6 @@ SUITE(ErrorHandlerTest)
     }
 }
 
-// ================ Тесты сетевого протокола ================
 SUITE(NetworkProtocolTest)
 {
     // Тест 1: Формат аутентификации
@@ -390,7 +379,6 @@ SUITE(NetworkProtocolTest)
     }
 }
 
-// ================ Тесты форматов файлов ================
 SUITE(FormatTests)
 {
     // Тест формата входного файла
@@ -458,7 +446,6 @@ SUITE(FormatTests)
     }
 }
 
-// ================ Тесты ClientConfig ================
 struct ClientConfig {
     string serverAddress;
     int serverPort;
@@ -486,7 +473,6 @@ SUITE(ClientConfigTest)
     }
 }
 
-// ================ Главная функция ================
 int main()
 {
     // Отключаем вывод в cout для чистоты тестов
